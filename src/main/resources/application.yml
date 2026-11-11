@@ -35,3 +35,10 @@ management:
 
 server:
   shutdown: graceful
+
+lexicon:
+  ingestion:
+    chunk-size: 1000
+    chunk-overlap: 150
+    embedding-batch-size: 32
+    embedding-dimensions: 768

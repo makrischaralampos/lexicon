@@ -1,0 +1,16 @@
+Orbital Dynamics Employee Handbook
+
+Vacation and leave
+Every full-time employee receives 25 days of paid vacation per calendar year. Unused vacation days can be carried over to the next year, up to a maximum of 5 days. Sick leave is paid in full for up to 10 days per year without a doctor's note.
+
+Remote work
+Employees may work remotely up to 3 days per week. The remaining days are spent at the Thessaloniki office. Fully remote arrangements require written approval from the department head.
+
+Support hours
+The customer support desk is open Monday to Friday from 08:00 to 18:00 Eastern European Time. Outside these hours, urgent incidents are routed to the on-call engineer.
+
+On-call rotation
+Engineers take part in a weekly on-call rotation. Each on-call week comes with a stipend of 150 euros. The on-call engineer must acknowledge a page within 15 minutes.
+
+Expenses and equipment
+Expenses below 200 euros do not need prior approval, but receipts must be submitted within 30 days. Laptops are refreshed every 36 months. Employees may choose between a Linux or macOS machine.
