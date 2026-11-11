@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: lexicon
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/lexicon}
+    username: ${DB_USER:lexicon}
+    password: ${DB_PASSWORD:lexicon}
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
+  ai:
+    ollama:
+      base-url: ${OLLAMA_URL:http://localhost:11434}
+      init:
+        pull-model-strategy: never
+      chat:
+        options:
+          model: ${LEXICON_CHAT_MODEL:llama3.2:3b}
+          temperature: 0.1
+      embedding:
+        options:
+          model: ${LEXICON_EMBEDDING_MODEL:nomic-embed-text}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when-authorized
+
+server:
+  shutdown: graceful
