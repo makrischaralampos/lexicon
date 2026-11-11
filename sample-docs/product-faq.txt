@@ -1,0 +1,22 @@
+Orbital Dynamics Product FAQ: Atlas Platform
+
+What is Atlas?
+Atlas is our fleet-tracking platform for shipping companies. It ingests position reports from vessels and turns them into live maps, arrival estimates and compliance reports.
+
+How often does Atlas update vessel positions?
+Positions are refreshed every 30 seconds for vessels reporting over satellite and every 5 seconds for vessels within coastal radio range.
+
+What does error E-4102 mean?
+Error E-4102 means a vessel report was rejected because its timestamp is more than 10 minutes in the future. Check the onboard clock and resend the report.
+
+Which plans are available?
+Atlas is offered in three plans: Starter, Professional and Enterprise. Starter supports up to 10 vessels, Professional up to 100 vessels, and Enterprise has no vessel limit. All plans include email support; only Professional and Enterprise include a dedicated account manager.
+
+What is the API rate limit?
+The public API allows 600 requests per minute per API key. Requests above the limit receive HTTP 429 with a Retry-After header.
+
+Can I export data?
+Yes. Reports can be exported as CSV or PDF. Bulk exports of more than 1 million rows must be requested through support and are delivered within 2 business days.
+
+Which regions host Atlas?
+Atlas runs in Frankfurt and Dublin. Customers can choose the region at signup; data does not leave the selected region.

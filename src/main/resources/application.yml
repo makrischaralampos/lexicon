@@ -42,3 +42,8 @@ lexicon:
     chunk-overlap: 150
     embedding-batch-size: 32
     embedding-dimensions: 768
+  retrieval:
+    default-top-k: 5
+    max-top-k: 20
+    candidate-pool: 30
+    rrf-k: 60
