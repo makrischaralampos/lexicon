@@ -8,6 +8,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 public record EvalProperties(
     @DefaultValue("sample-docs") String corpusDir,
     @DefaultValue("eval/reports") String reportDir,
+    @DefaultValue("latest") String reportName,
     @DefaultValue("5") int k,
     @DefaultValue("true") boolean judge,
     List<EvalQuestion> questions,

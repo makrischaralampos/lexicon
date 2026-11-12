@@ -21,7 +21,8 @@ final class EvalReport {
         String chatModel,
         String embeddingModel,
         double gate,
-        int k
+        int k,
+        String config
     ) {}
 
     record Summary(
@@ -68,6 +69,7 @@ final class EvalReport {
             .append("`, embedding model: `")
             .append(meta.embeddingModel())
             .append("`\n");
+        md.append("- Configuration: ").append(meta.config()).append('\n');
         md.append("- Corpus: ")
             .append(corpus.documentCount())
             .append(" documents, ")
@@ -270,6 +272,26 @@ final class EvalReport {
                     .append(cell(o.question().question()))
                     .append(" | ")
                     .append(outcome)
+                    .append(" | ")
+                    .append(cell(abbreviate(o.answer())))
+                    .append(" |\n");
+            }
+        }
+
+        md.append("\n### Answered without a relevant citation\n\n");
+        List<AnswerOutcome> badCitations = answered
+            .stream()
+            .filter(o -> !o.citationHit())
+            .toList();
+        if (badCitations.isEmpty()) {
+            md.append("None.\n");
+        } else {
+            md.append("| Id | Question | Answer |\n|---|---|---|\n");
+            for (AnswerOutcome o : badCitations) {
+                md.append("| ")
+                    .append(o.question().id())
+                    .append(" | ")
+                    .append(cell(o.question().question()))
                     .append(" | ")
                     .append(cell(abbreviate(o.answer())))
                     .append(" |\n");

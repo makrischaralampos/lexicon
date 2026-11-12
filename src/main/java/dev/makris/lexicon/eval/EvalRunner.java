@@ -1,6 +1,8 @@
 package dev.makris.lexicon.eval;
 
 import dev.makris.lexicon.config.AnswerProperties;
+import dev.makris.lexicon.config.EmbeddingProperties;
+import dev.makris.lexicon.config.IngestionProperties;
 import dev.makris.lexicon.eval.AnswerEvaluator.AnswerOutcome;
 import dev.makris.lexicon.eval.RetrievalEvaluator.ModeResult;
 import dev.makris.lexicon.retrieval.SearchMode;
@@ -10,6 +12,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,9 +32,12 @@ import org.springframework.stereotype.Component;
 class EvalRunner implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(EvalRunner.class);
+    private static final Pattern SAFE_NAME = Pattern.compile("[A-Za-z0-9._-]+");
 
     private final EvalProperties properties;
     private final AnswerProperties answerProperties;
+    private final IngestionProperties ingestionProperties;
+    private final EmbeddingProperties embeddingProperties;
     private final EvalCorpus corpus;
     private final RetrievalEvaluator retrievalEvaluator;
     private final AnswerEvaluator answerEvaluator;
@@ -42,6 +48,8 @@ class EvalRunner implements ApplicationRunner {
     EvalRunner(
         EvalProperties properties,
         AnswerProperties answerProperties,
+        IngestionProperties ingestionProperties,
+        EmbeddingProperties embeddingProperties,
         EvalCorpus corpus,
         RetrievalEvaluator retrievalEvaluator,
         AnswerEvaluator answerEvaluator,
@@ -53,6 +61,8 @@ class EvalRunner implements ApplicationRunner {
     ) {
         this.properties = properties;
         this.answerProperties = answerProperties;
+        this.ingestionProperties = ingestionProperties;
+        this.embeddingProperties = embeddingProperties;
         this.corpus = corpus;
         this.retrievalEvaluator = retrievalEvaluator;
         this.answerEvaluator = answerEvaluator;
@@ -79,6 +89,11 @@ class EvalRunner implements ApplicationRunner {
         if (questions.isEmpty()) {
             throw new IllegalStateException(
                 "No evaluation questions were loaded. Is eval/questions.yml present?"
+            );
+        }
+        if (!SAFE_NAME.matcher(properties.reportName()).matches()) {
+            throw new IllegalArgumentException(
+                "Invalid report name: " + properties.reportName()
             );
         }
 
@@ -114,7 +129,8 @@ class EvalRunner implements ApplicationRunner {
             chatModel,
             embeddingModel,
             answerProperties.minSimilarity(),
-            k
+            k,
+            describeConfig()
         );
         String markdown = EvalReport.render(
             meta,
@@ -126,12 +142,26 @@ class EvalRunner implements ApplicationRunner {
 
         Path reportDir = Path.of(properties.reportDir());
         Files.createDirectories(reportDir);
-        Path report = reportDir.resolve("latest.md");
+        Path report = reportDir.resolve(properties.reportName() + ".md");
         Files.writeString(report, markdown);
         System.out.println(markdown);
         log.info("Report written to {}", report.toAbsolutePath());
 
         return checkThresholds(EvalReport.summarize(retrieval, outcomes));
+    }
+
+    private String describeConfig() {
+        return String.format(
+            Locale.ROOT,
+            "chunks of %d characters with %d overlap, embedding prefixes %s, judge %s",
+            ingestionProperties.chunkSize(),
+            ingestionProperties.chunkOverlap(),
+            embeddingProperties.queryPrefix().isEmpty() &&
+                embeddingProperties.documentPrefix().isEmpty()
+                ? "off"
+                : "on",
+            properties.judge() ? "on" : "off"
+        );
     }
 
     private int checkThresholds(EvalReport.Summary summary) {

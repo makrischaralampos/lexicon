@@ -4,11 +4,17 @@ spring:
     banner-mode: off
   config:
     import: "file:./eval/questions.yml"
+  datasource:
+    url: ${EVAL_DB_URL:jdbc:postgresql://localhost:5433/lexicon_eval}
 
 lexicon:
+  ingestion:
+    chunk-size: 400
+    chunk-overlap: 80
   eval:
     corpus-dir: sample-docs
     report-dir: eval/reports
+    report-name: latest
     k: 5
     judge: true
     thresholds:

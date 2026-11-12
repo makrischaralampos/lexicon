@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
@@ -30,18 +31,33 @@ class EvalCorpus {
     private final EvalProperties properties;
     private final IngestionService ingestion;
     private final JdbcClient jdbc;
+    private final String datasourceUrl;
 
     EvalCorpus(
         EvalProperties properties,
         IngestionService ingestion,
-        JdbcClient jdbc
+        JdbcClient jdbc,
+        @Value("${spring.datasource.url}") String datasourceUrl
     ) {
         this.properties = properties;
         this.ingestion = ingestion;
         this.jdbc = jdbc;
+        this.datasourceUrl = datasourceUrl;
+    }
+
+    /** The evaluation owns its database: every run starts empty, so config changes always take effect. */
+    private void resetDatabase() {
+        if (!datasourceUrl.contains("eval")) {
+            throw new IllegalStateException(
+                "Refusing to wipe a database that is not an evaluation database: " +
+                    datasourceUrl
+            );
+        }
+        jdbc.sql("TRUNCATE documents CASCADE").update();
     }
 
     Loaded load() throws IOException {
+        resetDatabase();
         Path dir = Path.of(properties.corpusDir());
         List<Path> files;
         try (Stream<Path> stream = Files.list(dir)) {

@@ -3,6 +3,7 @@ package dev.makris.lexicon.ingestion;
 import dev.makris.lexicon.chunk.ChunkRepository;
 import dev.makris.lexicon.chunk.NewChunk;
 import dev.makris.lexicon.common.ApiException;
+import dev.makris.lexicon.config.EmbeddingProperties;
 import dev.makris.lexicon.config.IngestionProperties;
 import dev.makris.lexicon.document.DocumentRepository;
 import dev.makris.lexicon.document.DocumentStatus;
@@ -39,6 +40,7 @@ public class IngestionService {
     private final TransactionTemplate transactions;
     private final IngestionProperties properties;
     private final TextChunker chunker;
+    private final EmbeddingProperties embeddingProperties;
 
     public IngestionService(
         DocumentRepository documents,
@@ -46,7 +48,8 @@ public class IngestionService {
         DocumentParser parser,
         EmbeddingModel embeddingModel,
         TransactionTemplate transactions,
-        IngestionProperties properties
+        IngestionProperties properties,
+        EmbeddingProperties embeddingProperties
     ) {
         this.documents = documents;
         this.chunks = chunks;
@@ -54,6 +57,7 @@ public class IngestionService {
         this.embeddingModel = embeddingModel;
         this.transactions = transactions;
         this.properties = properties;
+        this.embeddingProperties = embeddingProperties;
         this.chunker = new TextChunker(
             properties.chunkSize(),
             properties.chunkOverlap()
@@ -177,7 +181,7 @@ public class IngestionService {
             );
             List<float[]> vectors;
             try {
-                vectors = embeddingModel.embed(batch);
+                vectors = embeddingModel.embed(withPrefix(batch));
             } catch (RuntimeException e) {
                 log.error("Embedding request failed", e);
                 throw ApiException.serviceUnavailable(
@@ -208,5 +212,15 @@ public class IngestionService {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 is not available", e);
         }
+    }
+
+    private List<String> withPrefix(List<String> batch) {
+        String prefix = embeddingProperties.documentPrefix();
+        return prefix.isEmpty()
+            ? batch
+            : batch
+                  .stream()
+                  .map(text -> prefix + text)
+                  .toList();
     }
 }

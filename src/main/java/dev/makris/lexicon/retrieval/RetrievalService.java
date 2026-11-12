@@ -1,6 +1,7 @@
 package dev.makris.lexicon.retrieval;
 
 import dev.makris.lexicon.common.ApiException;
+import dev.makris.lexicon.config.EmbeddingProperties;
 import dev.makris.lexicon.config.RetrievalProperties;
 import java.util.List;
 import java.util.UUID;
@@ -19,15 +20,18 @@ public class RetrievalService {
     private final ChunkSearchRepository repository;
     private final EmbeddingModel embeddingModel;
     private final RetrievalProperties properties;
+    private final EmbeddingProperties embeddingProperties;
 
     public RetrievalService(
         ChunkSearchRepository repository,
         EmbeddingModel embeddingModel,
-        RetrievalProperties properties
+        RetrievalProperties properties,
+        EmbeddingProperties embeddingProperties
     ) {
         this.repository = repository;
         this.embeddingModel = embeddingModel;
         this.properties = properties;
+        this.embeddingProperties = embeddingProperties;
     }
 
     /** The requested topK (or the default), capped at the configured maximum. */
@@ -72,7 +76,9 @@ public class RetrievalService {
 
     private float[] embedQuery(String query) {
         try {
-            return embeddingModel.embed(query);
+            return embeddingModel.embed(
+                embeddingProperties.queryPrefix() + query
+            );
         } catch (RuntimeException e) {
             log.error("Query embedding failed", e);
             throw ApiException.serviceUnavailable(
