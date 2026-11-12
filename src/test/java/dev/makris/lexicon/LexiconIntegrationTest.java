@@ -61,6 +61,7 @@ class LexiconIntegrationTest {
     private static final String SUPPORT_TEXT =
         "Customer support answers tickets Monday to Friday from 08:00 to 18:00.";
 
+    @SuppressWarnings("resource")
     private static final GenericContainer<?> POSTGRES = new GenericContainer<>(
         DockerImageName.parse("pgvector/pgvector:pg17")
     )
