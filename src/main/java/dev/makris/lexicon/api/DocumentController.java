@@ -3,6 +3,7 @@ package dev.makris.lexicon.api;
 import dev.makris.lexicon.common.PageResponse;
 import dev.makris.lexicon.document.DocumentService;
 import dev.makris.lexicon.ingestion.IngestionService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.io.IOException;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+@Tag(name = "Documents")
 @RestController
 @RequestMapping("/api/v1/documents")
 public class DocumentController {

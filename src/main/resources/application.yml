@@ -1,6 +1,10 @@
 spring:
   application:
     name: lexicon
+  http:
+    client:
+      connect-timeout: 5s
+      read-timeout: 120s
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/lexicon}
     username: ${DB_USER:lexicon}
@@ -50,3 +54,7 @@ lexicon:
   answer:
     min-similarity: 0.40
     max-context-chars: 8000
+
+logging:
+  pattern:
+    correlation: "[%X{requestId:-}] "
