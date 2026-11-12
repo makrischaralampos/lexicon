@@ -1,6 +1,7 @@
 package dev.makris.lexicon.chunk;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -31,5 +32,16 @@ public class ChunkRepository {
             })
             .toList();
         jdbcTemplate.batchUpdate(INSERT, batch);
+    }
+
+    public Optional<String> findContent(UUID chunkId) {
+        return jdbcTemplate
+            .queryForList(
+                "SELECT content FROM chunks WHERE id = ?",
+                String.class,
+                chunkId
+            )
+            .stream()
+            .findFirst();
     }
 }

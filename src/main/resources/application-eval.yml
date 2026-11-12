@@ -1,0 +1,17 @@
+spring:
+  main:
+    web-application-type: none
+    banner-mode: off
+  config:
+    import: "file:./eval/questions.yml"
+
+lexicon:
+  eval:
+    corpus-dir: sample-docs
+    report-dir: eval/reports
+    k: 5
+    judge: true
+    thresholds:
+      hybrid-hit-at-k: 0.80
+      refusal-rate: 0.70
+      answer-accuracy: 0.60
