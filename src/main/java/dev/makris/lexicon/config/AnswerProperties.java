@@ -14,5 +14,10 @@ public record AnswerProperties(
     @DecimalMin("0.0")
     @DecimalMax("1.0")
     double minSimilarity,
-    @DefaultValue("8000") @Min(1000) int maxContextChars
+    @DefaultValue("8000") @Min(1000) int maxContextChars,
+    /** Share of a sentence's content words that a source must contain to support it. */
+    @DefaultValue("0.50")
+    @DecimalMin("0.0")
+    @DecimalMax("1.0")
+    double minSupport
 ) {}

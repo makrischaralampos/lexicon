@@ -24,7 +24,8 @@ class AnswerServiceTest {
     private final RetrievalService retrieval = mock(RetrievalService.class);
     private final AnswerProperties properties = new AnswerProperties(
         0.40,
-        8000
+        8000,
+        0.50
     );
 
     private AnswerService service(AnswerGenerator generator) {
@@ -121,62 +122,103 @@ class AnswerServiceTest {
     }
 
     @Test
-    void uncitedAnswersAreRejected() {
-        retrievalReturns(List.of(chunk("a.txt", null, "text", 0.60)));
+    void anAnswerNoSourceSupportsIsRejected() {
+        retrievalReturns(
+            List.of(chunk("a.txt", null, "Vacation: 25 days per year.", 0.60))
+        );
 
         AnswerResult result = ask(
-            service((system, user) -> "Employees get 25 days.")
+            service((system, user) -> "The CEO is Jane Smith [1].")
         );
 
         assertThat(result.status()).isEqualTo(AnswerStatus.NO_ANSWER);
-        assertThat(result.reason()).isEqualTo(NoAnswerReason.UNCITED_ANSWER);
+        assertThat(result.reason()).isEqualTo(
+            NoAnswerReason.UNSUPPORTED_ANSWER
+        );
     }
 
     @Test
-    void citationsToNonexistentSourcesDoNotCount() {
-        retrievalReturns(List.of(chunk("a.txt", null, "text", 0.60)));
-
-        AnswerResult result = ask(
-            service((system, user) -> "Employees get 25 days [7].")
+    void aWrongFigureIsNotAccepted() {
+        retrievalReturns(
+            List.of(chunk("a.txt", null, "Vacation: 25 days per year.", 0.60))
         );
 
-        assertThat(result.reason()).isEqualTo(NoAnswerReason.UNCITED_ANSWER);
+        AnswerResult result = ask(
+            service((system, user) -> "Employees get 40 days of vacation [1].")
+        );
+
+        assertThat(result.reason()).isEqualTo(
+            NoAnswerReason.UNSUPPORTED_ANSWER
+        );
     }
 
     @Test
-    void validCitedAnswerIsReturnedWithOnlyTheCitedSources() {
-        RetrievedChunk first = chunk(
+    void aSupportedAnswerWithoutMarkersIsAccepted() {
+        retrievalReturns(
+            List.of(
+                chunk("handbook.txt", null, "Vacation: 25 days per year.", 0.62)
+            )
+        );
+
+        AnswerResult result = ask(
+            service((system, user) -> "Employees get 25 days of vacation.")
+        );
+
+        assertThat(result.status()).isEqualTo(AnswerStatus.ANSWERED);
+        assertThat(result.answer()).isEqualTo(
+            "Employees get 25 days of vacation [1]."
+        );
+    }
+
+    @Test
+    void aWrongCitationNumberIsRepairedFromTheEvidence() {
+        RetrievedChunk stipend = chunk(
+            "handbook.txt",
+            null,
+            "On-call stipend is 150 euros.",
+            0.55
+        );
+        RetrievedChunk vacation = chunk(
             "handbook.txt",
             null,
             "Vacation: 25 days per year.",
             0.62
         );
-        RetrievedChunk second = chunk(
-            "faq.pdf",
-            3,
-            "On-call stipend is 150 euros.",
-            0.55
+        retrievalReturns(List.of(stipend, vacation));
+
+        AnswerResult result = ask(
+            service((system, user) -> "Employees get 25 days of vacation [1].")
         );
-        retrievalReturns(List.of(first, second));
+
+        assertThat(result.status()).isEqualTo(AnswerStatus.ANSWERED);
+        assertThat(result.answer()).isEqualTo(
+            "Employees get 25 days of vacation [2]."
+        );
+        assertThat(result.citations()).hasSize(1);
+        assertThat(result.citations().get(0).index()).isEqualTo(2);
+        assertThat(result.citations().get(0).chunkId()).isEqualTo(
+            vacation.chunkId()
+        );
+    }
+
+    @Test
+    void unsupportedSentencesAreRemovedFromTheAnswer() {
+        retrievalReturns(
+            List.of(
+                chunk("handbook.txt", null, "Vacation: 25 days per year.", 0.62)
+            )
+        );
 
         AnswerResult result = ask(
             service(
-                (system, user) -> "Employees get 25 days of vacation [1][9]."
+                (system, user) ->
+                    "Employees get 25 days of vacation [1]. The CEO is Jane Smith [1]."
             )
         );
 
         assertThat(result.status()).isEqualTo(AnswerStatus.ANSWERED);
-        assertThat(result.reason()).isNull();
         assertThat(result.answer()).isEqualTo(
             "Employees get 25 days of vacation [1]."
-        );
-        assertThat(result.citations()).hasSize(1);
-        assertThat(result.citations().get(0).index()).isEqualTo(1);
-        assertThat(result.citations().get(0).filename()).isEqualTo(
-            "handbook.txt"
-        );
-        assertThat(result.citations().get(0).chunkId()).isEqualTo(
-            first.chunkId()
         );
     }
 

@@ -45,8 +45,8 @@ server:
 
 lexicon:
   ingestion:
-    chunk-size: 1000
-    chunk-overlap: 150
+    chunk-size: 400
+    chunk-overlap: 80
     embedding-batch-size: 32
     embedding-dimensions: 768
   retrieval:
@@ -57,6 +57,7 @@ lexicon:
   answer:
     min-similarity: 0.40
     max-context-chars: 8000
+    min-support: 0.50
   embedding:
     query-prefix: "search_query: "
     document-prefix: "search_document: "

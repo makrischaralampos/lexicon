@@ -6,6 +6,7 @@ import dev.makris.lexicon.observability.LexiconMetrics;
 import dev.makris.lexicon.retrieval.RetrievalService;
 import dev.makris.lexicon.retrieval.RetrievedChunk;
 import dev.makris.lexicon.retrieval.SearchMode;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -167,7 +168,7 @@ public class AnswerService {
         );
     }
 
-    /** Layers 2 and 3: model refusal, then citation validation. */
+    /** Layers 2 and 3: model refusal, then verification of every sentence against the sources. */
     private AnswerResult evaluate(
         String raw,
         PromptFactory.BuiltPrompt prompt,
@@ -187,27 +188,50 @@ public class AnswerService {
             );
         }
 
-        CitationParser.Parsed parsed = CitationParser.parse(
+        List<String> sources = prompt
+            .included()
+            .stream()
+            .map(RetrievedChunk::content)
+            .toList();
+        AttributionVerifier.Verified verified = AttributionVerifier.verify(
             text,
-            prompt.included().size()
+            sources,
+            properties.minSupport()
         );
-        if (parsed.cited().isEmpty()) {
+
+        if (verified.cited().isEmpty()) {
             log.warn(
-                "Model answer had no valid citation. Raw output: {}",
+                "No sentence of the model answer is supported by the sources. Raw output: {}",
                 abbreviate(text)
             );
             return finish(
-                AnswerResult.noAnswer(NoAnswerReason.UNCITED_ANSWER, stats)
+                AnswerResult.noAnswer(NoAnswerReason.UNSUPPORTED_ANSWER, stats)
+            );
+        }
+        if (verified.droppedSentences() > 0) {
+            log.info(
+                "Dropped {} unsupported sentence(s) from the model answer",
+                verified.droppedSentences()
+            );
+        }
+        if (
+            !new HashSet<>(verified.modelCited()).equals(
+                new HashSet<>(verified.cited())
+            )
+        ) {
+            log.info(
+                "Citation repair: model cited {} but the sources support {}",
+                verified.modelCited(),
+                verified.cited()
             );
         }
 
-        List<Citation> citations = parsed
+        List<Citation> citations = verified
             .cited()
             .stream()
-            .sorted()
             .map(n -> Citation.of(n, prompt.included().get(n - 1)))
             .toList();
-        return finish(AnswerResult.answered(parsed.text(), citations, stats));
+        return finish(AnswerResult.answered(verified.text(), citations, stats));
     }
 
     private String generate(String userPrompt) {

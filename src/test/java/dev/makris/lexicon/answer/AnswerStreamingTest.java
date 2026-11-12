@@ -23,7 +23,8 @@ class AnswerStreamingTest {
     private final RetrievalService retrieval = mock(RetrievalService.class);
     private final AnswerProperties properties = new AnswerProperties(
         0.40,
-        8000
+        8000,
+        0.50
     );
 
     private static AnswerGenerator streaming(
@@ -128,15 +129,15 @@ class AnswerStreamingTest {
     }
 
     @Test
-    void uncitedStreamedAnswerEndsWithARefusalResult() {
+    void anUnsupportedStreamedAnswerEndsWithARefusalResult() {
         retrievalReturns(0.62);
 
         List<AnswerEvent> events = collect(
-            streaming(new AtomicBoolean(), "Employees get 25 days of vacation.")
+            streaming(new AtomicBoolean(), "The CEO is Jane Smith.")
         );
 
         assertThat(resultOf(events).reason()).isEqualTo(
-            NoAnswerReason.UNCITED_ANSWER
+            NoAnswerReason.UNSUPPORTED_ANSWER
         );
     }
 

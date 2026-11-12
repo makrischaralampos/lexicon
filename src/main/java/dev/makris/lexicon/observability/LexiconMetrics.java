@@ -26,10 +26,11 @@ public class LexiconMetrics {
         this.topSimilarity = DistributionSummary.builder(
             "lexicon.retrieval.top.similarity"
         )
+            .baseUnit("percent")
             .description(
-                "Cosine similarity of the best retrieved chunk per question"
+                "Cosine similarity of the best retrieved chunk per question, in whole percent points"
             )
-            .serviceLevelObjectives(0.3, 0.4, 0.5, 0.6, 0.7, 0.8)
+            .serviceLevelObjectives(30, 40, 50, 60, 70, 80)
             .register(registry);
         this.chunksPerDocument = DistributionSummary.builder(
             "lexicon.ingestion.chunks"
@@ -62,7 +63,7 @@ public class LexiconMetrics {
             generationTimer.record(stats.generationMs(), TimeUnit.MILLISECONDS);
         }
         if (stats.chunksRetrieved() > 0) {
-            topSimilarity.record(stats.topSimilarity());
+            topSimilarity.record(Math.floor(stats.topSimilarity() * 100));
         }
     }
 

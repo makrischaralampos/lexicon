@@ -5,6 +5,6 @@ public enum NoAnswerReason {
     NO_RELEVANT_CONTEXT,
     /** The model said the sources do not contain the answer. */
     MODEL_DECLINED,
-    /** The model answered but cited no valid source, so the answer cannot be verified. */
-    UNCITED_ANSWER,
+    /** No sentence of the model's answer could be verified against the retrieved sources. */
+    UNSUPPORTED_ANSWER,
 }
