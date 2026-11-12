@@ -8,6 +8,7 @@ import dev.makris.lexicon.config.IngestionProperties;
 import dev.makris.lexicon.document.DocumentRepository;
 import dev.makris.lexicon.document.DocumentStatus;
 import dev.makris.lexicon.document.StoredDocument;
+import dev.makris.lexicon.observability.LexiconMetrics;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -41,6 +42,7 @@ public class IngestionService {
     private final IngestionProperties properties;
     private final TextChunker chunker;
     private final EmbeddingProperties embeddingProperties;
+    private final LexiconMetrics metrics;
 
     public IngestionService(
         DocumentRepository documents,
@@ -49,7 +51,8 @@ public class IngestionService {
         EmbeddingModel embeddingModel,
         TransactionTemplate transactions,
         IngestionProperties properties,
-        EmbeddingProperties embeddingProperties
+        EmbeddingProperties embeddingProperties,
+        LexiconMetrics metrics
     ) {
         this.documents = documents;
         this.chunks = chunks;
@@ -58,6 +61,7 @@ public class IngestionService {
         this.transactions = transactions;
         this.properties = properties;
         this.embeddingProperties = embeddingProperties;
+        this.metrics = metrics;
         this.chunker = new TextChunker(
             properties.chunkSize(),
             properties.chunkOverlap()
@@ -99,9 +103,11 @@ public class IngestionService {
         try {
             process(id, type, filename, content);
         } catch (ApiException e) {
+            metrics.ingestionFailed();
             documents.markFailed(id, e.getMessage());
             throw e;
         } catch (RuntimeException e) {
+            metrics.ingestionFailed();
             log.error("Ingestion of '{}' failed", filename, e);
             documents.markFailed(
                 id,
@@ -110,7 +116,9 @@ public class IngestionService {
             throw e;
         }
 
-        return new IngestionResult(documents.findById(id).orElseThrow(), true);
+        StoredDocument stored = documents.findById(id).orElseThrow();
+        metrics.ingestionCreated(stored.chunkCount());
+        return new IngestionResult(stored, true);
     }
 
     private void process(

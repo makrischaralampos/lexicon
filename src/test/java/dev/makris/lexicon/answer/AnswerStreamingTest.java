@@ -7,9 +7,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import dev.makris.lexicon.config.AnswerProperties;
+import dev.makris.lexicon.observability.LexiconMetrics;
 import dev.makris.lexicon.retrieval.RetrievalService;
 import dev.makris.lexicon.retrieval.RetrievedChunk;
 import dev.makris.lexicon.retrieval.SearchMode;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -63,7 +65,12 @@ class AnswerStreamingTest {
     }
 
     private List<AnswerEvent> collect(AnswerGenerator generator) {
-        return new AnswerService(retrieval, generator, properties)
+        return new AnswerService(
+            retrieval,
+            generator,
+            properties,
+            new LexiconMetrics(new SimpleMeterRegistry())
+        )
             .stream("How many vacation days?", SearchMode.HYBRID, null, null)
             .collectList()
             .block();

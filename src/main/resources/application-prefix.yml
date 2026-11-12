@@ -1,4 +1,0 @@
-lexicon:
-  embedding:
-    query-prefix: "search_query: "
-    document-prefix: "search_document: "

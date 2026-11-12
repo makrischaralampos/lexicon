@@ -2,6 +2,7 @@ package dev.makris.lexicon.answer;
 
 import dev.makris.lexicon.common.ApiException;
 import dev.makris.lexicon.config.AnswerProperties;
+import dev.makris.lexicon.observability.LexiconMetrics;
 import dev.makris.lexicon.retrieval.RetrievalService;
 import dev.makris.lexicon.retrieval.RetrievedChunk;
 import dev.makris.lexicon.retrieval.SearchMode;
@@ -31,15 +32,18 @@ public class AnswerService {
     private final RetrievalService retrievalService;
     private final AnswerGenerator generator;
     private final AnswerProperties properties;
+    private final LexiconMetrics metrics;
 
     public AnswerService(
         RetrievalService retrievalService,
         AnswerGenerator generator,
-        AnswerProperties properties
+        AnswerProperties properties,
+        LexiconMetrics metrics
     ) {
         this.retrievalService = retrievalService;
         this.generator = generator;
         this.properties = properties;
+        this.metrics = metrics;
     }
 
     public AnswerResult answer(
@@ -230,7 +234,7 @@ public class AnswerService {
             : Flux.just(new AnswerEvent.Token(text));
     }
 
-    private static AnswerResult finish(AnswerResult result) {
+    private AnswerResult finish(AnswerResult result) {
         log.info(
             "Answer status={} reason={} chunks={} topSimilarity={} retrievalMs={} generationMs={}",
             result.status(),
@@ -240,6 +244,7 @@ public class AnswerService {
             result.stats().retrievalMs(),
             result.stats().generationMs()
         );
+        metrics.answerCompleted(result);
         return result;
     }
 
